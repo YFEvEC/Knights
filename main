@@ -1,0 +1,586 @@
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{physics}
+\usepackage{mathdots}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage[T1]{fontenc}
+\usepackage[numbered,framed]{matlab-prettifier}
+\usepackage{MnSymbol,wasysym}
+\usepackage{hyperref}
+\usepackage{filecontents}
+\def\firstcircle{(90:4cm) circle (4.5cm)}
+\def\secondcircle{(200:3cm) circle (4.5cm)}
+\def\thirdcircle{(340:3cm) circle (4.5cm)}
+
+\newcommand{\N}{\mathbb{N}}
+% Bold for vectors and matrices
+\newcommand\vect[1]{\mathbf{#1}}
+\newcommand{\Z}{\mathbb{Z}}
+\renewcommand{\theenumi}{\alph{enumi}}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+ 
+\newenvironment{theorem}[2][Theorem]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{lemma}[2][Lemma]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{exercise}[2][\large Exercise]{\begin{trivlist}
+\item[\centering \Large \hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{reflection}[2][Reflection]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{proposition}[2][Proposition]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+\newenvironment{corollary}[2][Corollary]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+ 
+\makeatletter
+\def\@seccntformat#1{%
+  \expandafter\ifx\csname c@#1\endcsname\c@section\else
+  \csname the#1\endcsname\quad
+  \fi}
+\makeatother
+
+\setcounter{MaxMatrixCols}{20} 
+
+
+
+\usepackage{xcolor}
+\colorlet{kw}{blue}
+\definecolor{com}{rgb}{0,0.6,0.3}
+
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+% redefine keywords
+\algrenewcommand\algorithmicfunction{\textcolor{kw}{function}}
+\algrenewcommand\algorithmicwhile{\textcolor{kw}{while}}
+\algrenewcommand\algorithmicfor{\textcolor{kw}{for}}
+\algrenewcommand\algorithmicif{\textcolor{kw}{if}}
+\algrenewcommand\algorithmicelse{\textcolor{kw}{else}}
+\algrenewcommand\algorithmicend{\textcolor{kw}{end}}
+
+% new keywords
+\algnewcommand\Break{\textcolor{kw}{break}}%
+\algnewcommand\Continue{\textcolor{kw}{continue}}%
+
+% redefine loops
+\algdef{SE}[WHILE]{While}{EndWhile}[1]{\algorithmicwhile\ #1}{\algorithmicend}%
+\algdef{SE}[FOR]{For}{EndFor}[1]{\algorithmicfor\ #1}{\algorithmicend}%
+\algdef{SE}[IF]{IF}{EndFor}[1]{\algorithmicif\ #1 }{\algorithmicend}%
+
+% redefine comments
+\algrenewcommand{\algorithmiccomment}[1]{{\color{com}\%#1}}
+
+
+\begin{document}
+
+ 
+\title{\textbf{Knights.}}%replace X with the appropriate number
+\author{Eve Chen} %if necessary, replace with your course title
+\date{\normalsize 8th Apirl}
+\maketitle
+\noindent \underline{\textbf{Knights partial domination}}\\
+ The knight problem is trying to find the maximum number of knight I could put on the board, when I need to ensure that knights in different color will not attack each other. Besides, the number of knights sould be the same for each color on the board. At the beginning, I will have a $n \times m$ square chessboard with all three colors knights: black, white, and red. Starting with n,m = 3, I will increase m and n until the lpsolve takes more than 10 minutes to solve. \\\\
+To setup the problem, I define a binary variables: $x_{ijk}$, to indicate whether or not I should place a k-th(there are only three color, thus k will be the number 1,2, or 3, when 1 represents black, 2 represents red, and 3 represents white) color knight on the ij-th location. Since I want to maximize the number of knights in total, the objective function (for n×m) will be as following:\\
+$$maximize: \sum_{i=1}^{n}\sum_{j=1}^{m}\sum_{k=1}^{3}{x_{ijk}}$$
+At the same time, I do not want three knights with different color to be put in a same square together, thus I will have the following constraint:\\
+$$x_{ij1} + x_{ij2} + x_{ij3} \leq 1, 1 \leq i \leq n, 1 \leq j \leq m$$
+\begin{text}
+Besides, I need to ensure that the square on the board where could be attacked by at knight would not have the other color knight on it(such as position (i,j) has a black knight, then position (i+1,j+2) would not have a red or white knight). Excluding the square that is not actually on the board(such as position (i,j) when i, j < 1), I will introduce a set $S$ when $S_{ij}$ represent the location that a knight could attack. At the same time, set $A$ represents the actual location of knight when there is knight at $A_{ij}$ means it could attack (i,j):\\
+\end{text}
+$$S_{ij} = \{(i \pm 2, j \pm 1)\} \cup \{(i \pm 1, j \pm 2)\}$$
+$$A_{ij} = S_{ij} \cap \{(i, j): 1 \leq i \leq n,1 \leq j \leq m\}$$
+$$x_{ijk} + x_{abk'} \leq 1$$
+$$\textit{for all (a,b)} \in A_{ij}, k \neq k', k \in \{1,2,3\},k' \in \{1,2,3\}$$
+\begin{text}\\\\
+Less but not least, I need to ensure there are same number of knights for each color, that is red knights has the same number as white knights and black knights:\\
+$$\sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij1}}=\sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij2}} = \sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij3}}$$
+Furthermore, I would like to ensure all these variables to be binary:\\ 
+\end{text}
+$$x_{ijk} \in \{0,1\}, 1 \leq i \leq n, 1 \leq j \leq m, k \in \{1,2,3\}$$\\
+Under these constraint, we will have the following setup of lp:\\
+$$maximize: \sum_{i=1}^{n}\sum_{j=1}^{m}\sum_{k=1}^{3}{x_{ijk}}$$\\
+$$\textit{subject to: } x_{ij1} + x_{ij2} + x_{ij3} \leq 1, 1 \leq i \leq n, 1 \leq j \leq m$$
+$$x_{ijk} + x_{abk'} \leq 1,\textit{for all (a,b)} \in A_{ij}, k \in \{1,2,3\},k' \in \{1,2,3\}, k \neq k'$$
+$$\sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij1}}=\sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij2}} = \sum_{i=1}^{n}\sum_{j=1}^{m}{x_{ij3}}$$
+$$x_{ijk} \in \{0,1\},1 \leq i \leq n, 1 \leq j \leq m,k \in \{1,2,3\}$$
+\noindent{\textbf{Designing R Coding for lp solve input file}}:\\
+
+\begin{verbatim}
+generate_lp_input <- function(rows, columns) {
+  position_var <- function(i, j, k) {
+    return(sprintf("x_%d_%d_%d", i+1, j+1, k+1))
+  }
+  
+  # the lp solve Objective function would be the sum of all knights on the board
+  objective <- paste("max:", paste(unlist(lapply(0:(rows-1), function(i) {
+    unlist(lapply(0:(columns-1), function(j) {
+      lapply(0:2, function(k) {
+        position_var(i, j, k)
+      })
+    }))
+  })), collapse = " + "), ";\n")
+  
+  # each color of knights on the board would have the same amount
+  color_constraints <- c()
+  for (k1 in 0:2) {
+    for (k2 in (k1+1):2) {
+      color_constraints <- append(color_constraints,
+                                  paste(paste(sapply(0:(rows-1), function(i) {
+                                    sapply(0:(columns-1), function(j) {
+                                      position_var(i, j, k1)
+                                    })
+                                  }), collapse = " + "),
+                                  "=",
+                                  paste(sapply(0:(rows-1), function(i) {
+                                    sapply(0:(columns-1), function(j) {
+                                      position_var(i, j, k2)
+                                    })
+                                  }), collapse = " + "),
+                                  ";\n"))
+    }
+  }
+  
+  # on each square there will be only one knight
+  single_knight_constraints <- c()
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      single_knight_constraints <- append(single_knight_constraints,
+                                          paste(paste(sapply(0:2, function(k) {
+                                            position_var(i, j, k)
+                                          }), collapse = " + "),
+                                          "<= 1;\n"))
+    }
+  }
+
+  
+  # After a knight finish its movement, there will not be another 
+  #color knight at the attack location
+  attack_constraints <- c()
+  moves <- list(c(-1, -2), c(-1, 2), c(1, -2), c(1, 2), c(-2, -1),
+  c(-2, 1), c(2, -1), c(2, 1))
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      for (k in 0:2) {
+        for (k_ in 0:2) {
+          if (k != k_) {
+            for (move in moves) {
+              i_ <- i + move[1]
+              j_ <- j + move[2]
+              if (0 <= i_ && i_ < rows && 0 <= j_ && j_ < columns) {
+                attack_constraints <- append(attack_constraints,
+                                             paste(position_var(i, j, k), "+",
+                                             position_var(i_, j_, k_), "<= 1;\n"))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  # Binary every variables
+  binary_constraints <- c()
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      for (k in 0:2) {
+        binary_constraints <- append(binary_constraints, sprintf("bin %s;\n",
+        position_var(i, j, k)))
+      }
+    }
+  }
+  
+  # make a combination of every constraint to lp_solve file
+  lp_input <- paste(objective, paste(color_constraints, collapse = ""), 
+                    paste(single_knight_constraints, collapse = ""), 
+                    paste(attack_constraints, collapse = ""), 
+                    paste(binary_constraints, collapse = ""), sep = "")
+  return(lp_input)
+}
+
+rows <- 5  # the number of rows
+columns <- 5  # the number of columns
+lp_input <- generate_lp_input(rows, columns)
+
+write(lp_input, file = "knights.txt")
+\end{verbatim}
+
+By running the R code for the objective function and constraint function, we generate a lp solve input file as following:\\
+\begin{verbatim}
+(objective function)
+max: x_1_1_1 + x_1_1_2 + ... + x_5_5_2 + x_5_5_3 ;
+(constraint function to ensure that every color knight will have the same number)
+x_1_1_1 + ... + x_5_4_1 + x_5_5_1 = x_1_1_2 + ... + x_5_4_2 + x_5_5_2 ;
+x_1_1_1 + ... + x_5_4_1 + x_5_5_1 = x_1_1_3 + ... + x_5_4_3 + x_5_5_3 ;
+(to insure that each square will only be occupied by one knight)
+x_1_1_1 + x_1_1_2 + x_1_1_3 <= 1;
+x_1_2_1 + x_1_2_2 + x_1_2_3 <= 1;
+...(20 lines more)
+x_5_4_1 + x_5_4_2 + x_5_4_3 <= 1;
+x_5_5_1 + x_5_5_2 + x_5_5_3 <= 1;
+(constraint that different color knight will not attack each other)
+x_1_1_1 + x_2_3_2 <= 1;
+x_1_1_1 + x_3_2_2 <= 1;
+x_1_1_1 + x_2_3_3 <= 1;
+...(571 lines more)
+x_5_5_3 + x_4_3_2 <= 1;
+x_5_5_3 + x_3_4_2 <= 1;
+(to make the x_i_j be binary)
+bin x_1_1_1;
+bin x_1_1_2;
+bin x_1_1_3;
+...(71 lines more)
+bin x_5_5_3;
+\end{verbatim}
+\begin{text}
+ By running this lp solve input file, we got a result:   
+\end{text}
+
+\begin{verbatim}
+Value of objective function: 15.00000000
+
+Actual values of the variables:
+x_1_1_1                         1
+x_1_2_1                         1
+x_1_3_1                         1
+x_1_4_2                         1
+x_1_5_2                         1
+x_2_1_1                         1
+x_2_2_2                         1
+x_2_4_1                         1
+x_4_1_2                         1
+x_4_4_3                         1
+x_5_1_3                         1
+x_5_2_3                         1
+x_5_3_2                         1
+x_5_4_3                         1
+x_5_5_3                         1
+\end{verbatim}\\\\\\\\
+
+\begin{text}\\\\\\\\
+\noindent{\textbf{Analyzing the data}}:\\
+By generating the lp input file with different number of m and n, we could gather a data as well as draw a picture for $m \times n$ from $3 \times 3$ to $6 \times 6$ board.\\
+\end{text}
+\begin{center}
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Board Size & Knight's number & occupied percentage & time \\
+    \hline
+    3x3 & 6 & 0.67 &  0.01s \\
+    4x4 & 12 & 0.75 & 0.18s \\
+    5x5 & 15 & 0.60 & 113.58s \\
+    6x6 & 24 & 0.67 & 532.64s \\
+    \hline
+  \end{tabular}
+  \end{center}
+This table shows the relationship between the Knight's number, board size, occupied percentage, and time required to solve a Knight's problem on different chessboard sizes. By observing the table, I noticed that as the board size increases, the Knight's number increases as well. This is expected since a larger board requires more moves to cover all squares.\\\\
+The occupied percentage (the ratio of the total number of squares visited to the total number of squares on the board) varies between 0.60 and 0.75. This indicates that the knight doesn't cover all the squares on the board in the given examples, except for the 4x4 board where it covers 0.75 of the board.\\\\
+The time required to solve the problem increases significantly as the board size grows. This is because the problem becomes more complex and computationally intensive as the number of possible moves and positions increases.\\\\
+\noindent{\textbf{drawing the board with mark}}:\\
+Besides the data, I also gather the pictures for $m \times n$ from $3 \times 3$ to $6 \times 6$ board, when $b$ represents black knight $r$ represents red knight, and $w$ represents white knight.\\\\
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 2.5 ) {b};
+\node at ( 1.5 , 2.5 ) {r};
+\node at ( 1.5 , 1.5 ) {w};
+\node at ( 2.5 , 2.5) {w};
+\node at ( 2.5 , 0.5 ) {r};
+\node at (  2.5, 1.5 ) {b};
+\draw[gray] (0,0) grid ( 3 , 3 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 3.5 , 0.5 ) {b};
+\node at ( 3.5 , 1.5 ) {r};
+\node at ( 3.5 , 2.5 ) {w};
+\node at ( 3.5 , 3.5) {b};
+\node at ( 2.5 , 0.5 ) {w};
+\node at ( 2.5, 3.5 ) {r};
+\node at ( 0.5, 0.5 ) {b};
+\node at ( 0.5, 1.5 ) {w};
+\node at ( 0.5, 2.5 ) {r};
+\node at ( 0.5, 3.5 ) {b};
+\node at ( 1.5, 0.5 ) {r};
+\node at ( 1.5, 3.5 ) {w};
+\draw[gray] (0,0) grid ( 4 , 4 );
+\end{tikzpicture}\\\\
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 3.5 , 0.5 ) {w};
+\node at ( 3.5 , 1.5 ) {w};
+\node at ( 3.5 , 3.5) {b};
+\node at ( 3.5 , 4.5 ) {r};
+\node at ( 4.5 , 0.5 ) {w};
+\node at ( 4.5 , 4.5 ) {r};
+\node at ( 2.5, 0.5 ) {r};
+\node at ( 2.5 , 4.5 ) {b};
+\node at ( 0.5, 0.5 ) {w};
+\node at ( 0.5, 1.5 ) {r};
+\node at ( 0.5, 4.5 ) {b};
+\node at ( 0.5, 3.5 ) {b};
+\node at ( 1.5, 0.5 ) {w};
+\node at ( 1.5, 3.5 ) {r};
+\node at ( 1.5, 4.5 ) {b};
+\draw[gray] (0,0) grid ( 5 , 5 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {w};
+\node at ( 1.5 , 0.5 ) {w};
+\node at ( 2.5 , 0.5 ) {r};
+\node at ( 3.5 , 0.5 ) {r};
+\node at ( 4.5 , 0.5 ) {w};
+\node at ( 5.5 , 0.5 ) {w};
+\node at ( 0.5 , 1.5 ) {r};
+\node at ( 1.5 , 1.5 ) {r};
+\node at ( 2.5 , 1.5 ) {w};
+\node at ( 3.5 , 1.5 ) {w};
+\node at ( 4.5 , 1.5 ) {r};
+\node at ( 5.5 , 1.5 ) {r};
+\node at ( 0.5 , 2.5 ) {w};
+\node at ( 5.5 , 2.5 ) {w};
+\node at ( 0.5 , 4.5 ) {b};
+\node at ( 2.5 , 4.5 ) {b};
+\node at ( 3.5 , 4.5 ) {b};
+\node at ( 5.5 , 4.5 ) {r};
+\node at ( 0.5 , 5.5 ) {b};
+\node at ( 1.5 , 5.5 ) {b};
+\node at ( 2.5 , 5.5 ) {b};
+\node at ( 3.5 , 5.5 ) {r};
+\node at ( 4.5 , 5.5 ) {b};
+\node at ( 5.5 , 5.5 ) {b};
+\draw[gray] (0,0) grid ( 6 , 6 );
+\end{tikzpicture}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\begin{text}
+Then i would like to check the board with non-square boards, generate the lp input file and result to gather the results in a table:\\
+\begin{center}
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Board Size & Knight's number & occupied percentage & time \\
+    \hline
+    3x4 & 6 & 0.50 &  0.13s \\
+    3x5 & 9 & 0.60 & 0.28s \\
+    3x6 & 12 & 0.67 & 0.53s \\
+    3x7 & 15 & 0.71 & 0.66s \\
+    3x8 & 18 & 0.75 & 0.97s \\
+    3x9 & 18 & 0.67 & 29.57s \\
+    3x10 & 21 & 0.70 & 48.49s \\
+    3x11 & 24 & 0.72 & 64.37s \\
+    4x5 & 15 & 0.75 & 0.15s \\
+    4x6 & 15 & 0.63 & 8.68s \\
+    4x7& 18 & 0.64 & 61.01s \\
+    \hline
+  \end{tabular}
+  \end{center}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {r}; % x_1_2_2
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {w}; % x_1_4_3
+\node at ( 1.5 , 1.5 ) {w}; % x_2_2_3
+\node at ( 1.5 , 3.5 ) {r}; % x_2_4_2
+\draw[gray] (0,0) grid ( 3 , 4 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {r}; % x_1_2_2
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {w}; % x_1_4_3
+\node at ( 0.5 , 4.5 ) {r}; % x_1_5_2
+\node at ( 1.5 , 1.5 ) {w}; % x_2_2_3
+\node at ( 1.5 , 3.5 ) {r}; % x_2_4_2
+\node at ( 1.5 , 4.5 ) {b}; % x_2_5_1
+\node at ( 2.5 , 4.5 ) {w}; % x_3_5_3
+\draw[gray] (0,0) grid ( 3 , 5 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {r}; % x_1_3_2
+\node at ( 0.5 , 3.5 ) {w}; % x_1_4_3
+\node at ( 0.5 , 4.5 ) {r}; % x_1_5_2
+\node at ( 1.5 , 0.5 ) {r}; % x_2_1_2
+\node at ( 1.5 , 1.5 ) {w}; % x_2_2_3
+\node at ( 1.5 , 3.5 ) {b}; % x_2_4_1
+\node at ( 1.5 , 4.5 ) {r}; % x_2_5_2
+\node at ( 1.5 , 5.5 ) {w}; % x_2_6_3
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 4.5 ) {w}; % x_3_5_3
+\draw[gray] (0,0) grid ( 3 , 6 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 5.5 ) {r}; % x_1_6_2
+\node at ( 0.5 , 6.5 ) {r}; % x_1_7_2
+\node at ( 1.5 , 0.5 ) {w}; % x_2_1_3
+\node at ( 1.5 , 1.5 ) {w}; % x_2_2_3
+\node at ( 1.5 , 2.5 ) {b}; % x_2_3_1
+\node at ( 1.5 , 4.5 ) {r}; % x_2_5_2
+\node at ( 1.5 , 5.5 ) {w}; % x_2_6_3
+\node at ( 1.5 , 6.5 ) {w}; % x_2_7_3
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 1.5 ) {b}; % x_3_2_1
+\node at ( 2.5 , 3.5 ) {w}; % x_3_4_3
+\node at ( 2.5 , 5.5 ) {r}; % x_3_6_2
+\node at ( 2.5 , 6.5 ) {r}; % x_3_7_2
+\draw[gray] (0,0) grid ( 3 , 7 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 4.5 ) {r}; % x_1_5_2
+\node at ( 0.5 , 6.5 ) {w}; % x_1_7_3
+\node at ( 0.5 , 7.5 ) {w}; % x_1_8_3
+\node at ( 1.5 , 0.5 ) {w}; % x_2_1_3
+\node at ( 1.5 , 1.5 ) {r}; % x_2_2_2
+\node at ( 1.5 , 3.5 ) {b}; % x_2_4_1
+\node at ( 1.5 , 4.5 ) {w}; % x_2_5_3
+\node at ( 1.5 , 6.5 ) {r}; % x_2_7_2
+\node at ( 1.5 , 7.5 ) {b}; % x_2_8_1
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 1.5 ) {b}; % x_3_2_1
+\node at ( 2.5 , 3.5 ) {r}; % x_3_4_2
+\node at ( 2.5 , 4.5 ) {r}; % x_3_5_2
+\node at ( 2.5 , 6.5 ) {w}; % x_3_7_3
+\node at ( 2.5 , 7.5 ) {w}; % x_3_8_3
+\draw[gray] (0,0) grid ( 3 , 8 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 4.5 ) {r}; % x_1_5_2
+\node at ( 0.5 , 5.5 ) {r}; % x_1_6_2
+\node at ( 0.5 , 6.5 ) {w}; % x_1_7_3
+\node at ( 0.5 , 7.5 ) {w}; % x_1_8_3
+\node at ( 0.5 , 8.5 ) {w}; % x_1_9_3
+\node at ( 1.5 , 0.5 ) {b}; % x_2_1_1
+\node at ( 1.5 , 1.5 ) {r}; % x_2_2_2
+\node at ( 1.5 , 7.5 ) {r}; % x_2_8_2
+\node at ( 1.5 , 8.5 ) {w}; % x_2_9_3
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 1.5 ) {b}; % x_3_2_1
+\node at ( 2.5 , 4.5 ) {r}; % x_3_5_2
+\node at ( 2.5 , 7.5 ) {w}; % x_3_8_3
+\node at ( 2.5 , 8.5 ) {w}; % x_3_9_3
+\draw[gray] (0,0) grid ( 3 , 9 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 4.5 ) {r}; % x_1_5_2
+\node at ( 0.5 , 5.5 ) {r}; % x_1_6_2
+\node at ( 0.5 , 7.5 ) {w}; % x_1_8_3
+\node at ( 0.5 , 8.5 ) {w}; % x_1_9_3
+\node at ( 0.5 , 9.5 ) {w}; % x_1_10_3
+\node at ( 1.5 , 0.5 ) {b}; % x_2_1_1
+\node at ( 1.5 , 1.5 ) {r}; % x_2_2_2
+\node at ( 1.5 , 4.5 ) {b}; % x_2_5_1
+\node at ( 1.5 , 8.5 ) {r}; % x_2_9_2
+\node at ( 1.5 , 9.5 ) {w}; % x_2_10_3
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 1.5 ) {b}; % x_3_2_1
+\node at ( 2.5 , 4.5 ) {r}; % x_3_5_2
+\node at ( 2.5 , 5.5 ) {r}; % x_3_6_2
+\node at ( 2.5 , 7.5 ) {w}; % x_3_8_3
+\node at ( 2.5 , 8.5 ) {w}; % x_3_9_3
+\node at ( 2.5 , 9.5 ) {w}; % x_3_10_3
+\draw[gray] (0,0) grid ( 3 , 10 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 5.5 ) {w}; % x_1_6_3
+\node at ( 0.5 , 7.5 ) {r}; % x_1_8_2
+\node at ( 0.5 , 9.5 ) {w}; % x_1_10_3
+\node at ( 0.5 , 10.5 ) {w}; % x_1_11_3
+\node at ( 1.5 , 0.5 ) {b}; % x_2_1_1
+\node at ( 1.5 , 1.5 ) {r}; % x_2_2_2
+\node at ( 1.5 , 2.5 ) {b}; % x_2_3_1
+\node at ( 1.5 , 4.5 ) {b}; % x_2_5_1
+\node at ( 1.5 , 5.5 ) {r}; % x_2_6_2
+\node at ( 1.5 , 6.5 ) {r}; % x_2_7_2
+\node at ( 1.5 , 7.5 ) {w}; % x_2_8_3
+\node at ( 1.5 , 8.5 ) {w}; % x_2_9_3
+\node at ( 1.5 , 9.5 ) {r}; % x_2_10_2
+\node at ( 1.5 , 10.5 ) {r}; % x_2_11_2
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 1.5 ) {b}; % x_3_2_1
+\node at ( 2.5 , 5.5 ) {w}; % x_3_6_3
+\node at ( 2.5 , 7.5 ) {r}; % x_3_8_2
+\node at ( 2.5 , 9.5 ) {w}; % x_3_10_3
+\node at ( 2.5 , 10.5 ) {w}; % x_3_11_3
+\draw[gray] (0,0) grid ( 3 , 11 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {r}; % x_1_3_2
+\node at ( 0.5 , 3.5 ) {w}; % x_1_4_3
+\node at ( 0.5 , 4.5 ) {w}; % x_1_5_3
+\node at ( 1.5 , 0.5 ) {r}; % x_2_1_2
+\node at ( 1.5 , 1.5 ) {w}; % x_2_2_3
+\node at ( 1.5 , 3.5 ) {b}; % x_2_4_1
+\node at ( 1.5 , 4.5 ) {r}; % x_2_5_2
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 4.5 ) {w}; % x_3_5_3
+\node at ( 3.5 , 0.5 ) {w}; % x_4_1_3
+\node at ( 3.5 , 1.5 ) {r}; % x_4_2_2
+\node at ( 3.5 , 3.5 ) {r}; % x_4_4_2
+\node at ( 3.5 , 4.5 ) {b}; % x_4_5_1
+\draw[gray] (0,0) grid ( 4 , 5 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 4.5 ) {w}; % x_1_5_3
+\node at ( 0.5 , 5.5 ) {w}; % x_1_6_3
+\node at ( 1.5 , 0.5 ) {b}; % x_2_1_1
+\node at ( 1.5 , 1.5 ) {r}; % x_2_2_2
+\node at ( 1.5 , 5.5 ) {r}; % x_2_6_2
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 5.5 ) {w}; % x_3_6_3
+\node at ( 3.5 , 0.5 ) {r}; % x_4_1_2
+\node at ( 3.5 , 3.5 ) {w}; % x_4_4_3
+\node at ( 3.5 , 4.5 ) {r}; % x_4_5_2
+\node at ( 3.5 , 5.5 ) {w}; % x_4_6_3
+\draw[gray] (0,0) grid ( 4 , 6 );
+\end{tikzpicture}
+\begin{tikzpicture}[auto,scale=1]
+\node at ( 0.5 , 0.5 ) {b}; % x_1_1_1
+\node at ( 0.5 , 1.5 ) {b}; % x_1_2_1
+\node at ( 0.5 , 2.5 ) {b}; % x_1_3_1
+\node at ( 0.5 , 3.5 ) {r}; % x_1_4_2
+\node at ( 0.5 , 4.5 ) {w}; % x_1_5_3
+\node at ( 0.5 , 6.5 ) {w}; % x_1_7_3
+\node at ( 1.5 , 5.5 ) {r}; % x_2_6_2
+\node at ( 1.5 , 6.5 ) {w}; % x_2_7_3
+\node at ( 2.5 , 0.5 ) {b}; % x_3_1_1
+\node at ( 2.5 , 5.5 ) {w}; % x_3_6_3
+\node at ( 2.5 , 6.5 ) {r}; % x_3_7_2
+\node at ( 3.5 , 0.5 ) {b}; % x_4_1_1
+\node at ( 3.5 , 1.5 ) {r}; % x_4_2_2
+\node at ( 3.5 , 2.5 ) {b}; % x_4_3_1
+\node at ( 3.5 , 3.5 ) {w}; % x_4_4_3
+\node at ( 3.5 , 4.5 ) {r}; % x_4_5_2
+\node at ( 3.5 , 5.5 ) {w}; % x_4_6_3
+\node at ( 3.5 , 6.5 ) {r}; % x_4_7_2
+\draw[gray] (0,0) grid ( 4 , 7 );
+\end{tikzpicture}
+
+
+
+\end{text}\\
+
+\end{document}
+
