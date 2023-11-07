@@ -1,0 +1,97 @@
+generate_lp_input <- function(rows, columns) {
+  position_var <- function(i, j, k) {
+    return(sprintf("x_%d_%d_%d", i+1, j+1, k+1))
+  }
+  
+  # the lp solve Objective function would be the sum of all knights on the board
+  objective <- paste("max:", paste(unlist(lapply(0:(rows-1), function(i) {
+    unlist(lapply(0:(columns-1), function(j) {
+      lapply(0:2, function(k) {
+        position_var(i, j, k)
+      })
+    }))
+  })), collapse = " + "), ";\n")
+  
+  # each color of knights on the board would have the same amount
+  color_constraints <- c()
+  for (k1 in 0:2) {
+    for (k2 in (k1+1):2) {
+      color_constraints <- append(color_constraints,
+                                  paste(paste(sapply(0:(rows-1), function(i) {
+                                    sapply(0:(columns-1), function(j) {
+                                      position_var(i, j, k1)
+                                    })
+                                  }), collapse = " + "),
+                                  "=",
+                                  paste(sapply(0:(rows-1), function(i) {
+                                    sapply(0:(columns-1), function(j) {
+                                      position_var(i, j, k2)
+                                    })
+                                  }), collapse = " + "),
+                                  ";\n"))
+    }
+  }
+  
+  # on each square there will be only one knight
+  single_knight_constraints <- c()
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      single_knight_constraints <- append(single_knight_constraints,
+                                          paste(paste(sapply(0:2, function(k) {
+                                            position_var(i, j, k)
+                                          }), collapse = " + "),
+                                          "<= 1;\n"))
+    }
+  }
+
+  
+  # After a knight finish its movement, there will not be another 
+  #color knight at the attack location
+  attack_constraints <- c()
+  moves <- list(c(-1, -2), c(-1, 2), c(1, -2), c(1, 2), c(-2, -1),
+  c(-2, 1), c(2, -1), c(2, 1))
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      for (k in 0:2) {
+        for (k_ in 0:2) {
+          if (k != k_) {
+            for (move in moves) {
+              i_ <- i + move[1]
+              j_ <- j + move[2]
+              if (0 <= i_ && i_ < rows && 0 <= j_ && j_ < columns) {
+                attack_constraints <- append(attack_constraints,
+                                             paste(position_var(i, j, k), "+",
+                                             position_var(i_, j_, k_), "<= 1;\n"))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  # Binary every variables
+  binary_constraints <- c()
+  for (i in 0:(rows-1)) {
+    for (j in 0:(columns-1)) {
+      for (k in 0:2) {
+        binary_constraints <- append(binary_constraints, sprintf("bin %s;\n",
+        position_var(i, j, k)))
+      }
+    }
+  }
+  
+  # make a combination of every constraint to lp_solve file
+  lp_input <- paste(objective, paste(color_constraints, collapse = ""), 
+                    paste(single_knight_constraints, collapse = ""), 
+                    paste(attack_constraints, collapse = ""), 
+                    paste(binary_constraints, collapse = ""), sep = "")
+  return(lp_input)
+}
+
+rows <- 5  # the number of rows
+columns <- 5  # the number of columns
+lp_input <- generate_lp_input(rows, columns)
+
+write(lp_input, file = "knights.txt")
+
